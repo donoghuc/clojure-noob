@@ -45,25 +45,20 @@
 (= ((fn [& acc] (reduce #(if (> %1 %2) %1 %2) acc)) 1 8 3 4) 8)
 
 ;; Interleaving two Seqs: Restriction (interleave)
+;; recursive solution for fun (not allowed)
 (defn recur-soln
-  [col-1 col-2] 
-  ((if (or (empty? col-1) (empty? col-2)
-           ((cons acc (first col-1))
-            (cons acc (first col-2))
-            (recur (rest col-1) (rest col-2)))))))
-;; why no work?
-(= ((defn recur-soln
-  [col-1 col-2] (recur-soln col-1 col-2 [])
-  [col-2 col-2 acc]
-  ((if (or (empty? col-1) (empty? col-2))
-     ((conj acc (first col-1) (first col-2)))
-     (recur-soln (rest col-1) (rest col-2) acc)))) [1 2 3] [:a :b :c]) '(1 :a 2 :b 3 :c))
-;; find this soln later
-(defn recur-soln
-  [col-1 col-2] (recur-soln col-1 col-2 [])
-  [col-1 col-2 acc]
-  ((if (or (empty? col-1) (empty? col-2))
+  ([col-1 col-2] (recur-soln col-1 col-2 []))
+  ([col-1 col-2 acc]
+   (if (or (empty? col-1) (empty? col-2))
      acc
-     (recur-soln (rest col-1) (rest col-2) (conj acc (first col-1) (first col-2)) ))))
+     (recur (rest col-1) (rest col-2) (conj acc (first col-1) (first col-2))))))
 ;; soln found
 #(mapcat vector %1 %2)
+
+;; simple recursion example
+(defn recur-sum
+  ([vals] (recur-sum vals 0))
+  ([vals acc]
+   (if (empty? vals)
+     acc
+     (recur-sum (rest vals) (+ (first vals) acc)))))
