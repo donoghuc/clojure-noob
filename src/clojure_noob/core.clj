@@ -5,3 +5,65 @@
   "I don't do a whole lot ... yet."
   [& args]
   (println "Hello, World!"))
+(defn train
+  []
+  println "choo choo!")
+
+;; Simple Math
+(= (- 10 (* 2 3)) 4)
+
+;; Intro to Functions
+(= 8 ((fn add-five [x] (+ x 5)) 3))
+(= 8 ((fn [x] (+ x 5)) 3))
+(= 8 (#(+ % 5) 3))
+(= 8 ((partial + 5) 3))
+
+;; Double Down
+(= (#(* % 2) 2) 4)
+
+;; Hello World
+(= (#(str "Hello, " % "!") "Dave") "Hello, Dave!")
+
+;; Last Element: Restriction (last)
+;;      solution
+(fn [x] (if (> (count x) 0)
+          (nth x (- (count x) 1))
+          nil))
+;;       test
+(= ((fn [x] (if (> (count x) 0)
+          (nth x (- (count x) 1))
+          nil)) [1 2 3 4 5]) 5)
+
+;; Regular Expressions
+(= "ABC" (apply str (re-seq #"[A-Z]+" "bA1B3Ce ")))
+
+;; Maximum Value: Restriction (max, max-key)
+;;    solution
+(fn [& acc] (reduce #(if (> %1 %2) %1 %2) acc))
+#(reduce (fn [a b] (if (> a b) a b)) %&)
+;;    test
+(= ((fn [& acc] (reduce #(if (> %1 %2) %1 %2) acc)) 1 8 3 4) 8)
+
+;; Interleaving two Seqs: Restriction (interleave)
+(defn recur-soln
+  [col-1 col-2] 
+  ((if (or (empty? col-1) (empty? col-2)
+           ((cons acc (first col-1))
+            (cons acc (first col-2))
+            (recur (rest col-1) (rest col-2)))))))
+;; why no work?
+(= ((defn recur-soln
+  [col-1 col-2] (recur-soln col-1 col-2 [])
+  [col-2 col-2 acc]
+  ((if (or (empty? col-1) (empty? col-2))
+     ((conj acc (first col-1) (first col-2)))
+     (recur-soln (rest col-1) (rest col-2) acc)))) [1 2 3] [:a :b :c]) '(1 :a 2 :b 3 :c))
+;; find this soln later
+(defn recur-soln
+  [col-1 col-2] (recur-soln col-1 col-2 [])
+  [col-1 col-2 acc]
+  ((if (or (empty? col-1) (empty? col-2))
+     acc
+     (recur-soln (rest col-1) (rest col-2) (conj acc (first col-1) (first col-2)) ))))
+;; soln found
+#(mapcat vector %1 %2)
