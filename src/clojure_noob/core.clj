@@ -62,3 +62,50 @@
    (if (empty? vals)
      acc
      (recur-sum (rest vals) (+ (first vals) acc)))))
+
+;; Simple recursion
+((fn foo [x] (when (> x 0) (conj (foo (dec x)) x))) 5)
+
+;; -> macro
+(= (last (sort (rest (reverse [2 5 4 1 3 6]))))
+   (-> [2 5 4 1 3 6] (reverse) (rest) (sort) (last))
+   5)
+
+;; ->> macro
+(= (reduce + (map inc (take 3 (drop 2 [2 5 4 1 3 6]))))
+   (->> [2 5 4 1 3 6] (drop 2) (take 3) (map inc) (reduce +))
+   11)
+
+;; Recurring Theme
+(= [7 6 5 4 3]
+  (loop [x 5
+         result []]
+    (if (> x 0)
+      (recur (dec x) (conj result (+ 2 x)))
+      result)))
+
+;; nil key (get will return val or nil, therefore use contains?)
+(true? (#(contains? %2 %1) :a {:a nil :b 2}))
+
+;; A nil key #134 (also consider nil?)
+(true? (#(= nil (get %2 %1 false)) :a {:a nil :b 2}))
+
+;; for loops
+(= '(1 5 9 13 17 21 25 29 33 37) (for [x (range 40)
+            :when (= 1 (rem x 4))]
+        x))
+
+(= '(1 5 9 13 17 21 25 29 33 37) (for [x (iterate #(+ 4 %) 0)
+            :let [z (inc x)]
+            :while (< z 40)]
+        z))
+
+(= '(1 5 9 13 17 21 25 29 33 37) (for [[x y] (partition 2 (range 20))]
+        (+ x y)))
+
+;; map defaults
+(= (#(zipmap %2 (repeat %1)) 0 [:a :b :c]) {:a 0 :b 0 :c 0})
+#(into {} (map vector %2 (repeat %)))
+#(into {}
+       (for [k %2]
+         [k %]))
