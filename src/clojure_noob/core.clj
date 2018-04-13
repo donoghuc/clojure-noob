@@ -147,4 +147,41 @@ into ()
 ;; chouser's soln (cast to seq for the string case)
 #(= (seq %) (reverse %))
 
-(take 3 (range))
+;; fibonacci (very interesting!)
+;;http://blog.klipse.tech/clojurescript/2016/04/20/fibonacci.html
+;; iterate
+(def fib-seq-iterate
+  (map first (iterate 
+               (fn [[a b]] [b (+ a b)]) [0 1])))
+
+(take 30 fib-seq-iterate)
+;; lazy-cat
+(def fib-seq-cat
+  (lazy-cat [0 1] (map + (rest fib-seq-cat) fib-seq-cat)))
+
+(take 30 fib-seq-cat)
+;; lazy-seq
+(def fib-seq-seq
+  ((fn fib [a b] 
+     (lazy-seq (cons a (fib b (+ a b)))))
+   0 1))
+
+(take 30 fib-seq-seq)
+;; submitted solution
+#(take % (map first (iterate (fn [[x y]] [y (+ x y)]) [1 1])))
+
+(#(take % (map first (iterate (fn [[x y]] [y (+ x y)]) [1 1]))) 3)
+
+;; amalloy/chouser
+(fn f [a b n]
+  (if (pos? n)
+    (cons a
+          (f b (+ a b) (dec n)))))
+1 1 
+
+((fn f [a b n]
+  (if (pos? n)
+    (cons a
+          (f b (+ a b) (dec n)))))
+1 1 3)
+
