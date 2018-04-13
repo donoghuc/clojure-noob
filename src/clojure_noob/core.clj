@@ -109,3 +109,42 @@
 #(into {}
        (for [k %2]
          [k %]))
+
+;; implement nth Restriction: nth
+(= (#(last (take (inc %2) %1)) '(4 5 6 7) 2) 6)
+#(last (take (inc %2) %1))
+#(first (drop %2 %1)) 
+
+;; implement count Restriction: count
+;; example
+(= ((fn [x] (reduce + (map #(if % 1 1) x))) '(1 2 3 3 1)) 5)
+;;soln
+(fn [x] (reduce + (map #(if % 1 1) x)))
+;; chouser soln
+reduce #(do %2 (+ 1 %)) 0
+
+;; reverse restrictions: revers rseq
+;; function def not allowed (recursive soln)
+(defn recur-rev
+  ([col] (recur-rev col '()))
+  ([col acc]
+   (if (empty? col)
+     acc
+     (recur (rest col) (cons (first col) acc)))))
+
+(recur-rev [1 2 3])
+
+;; use into (cons will add to front)
+into ()
+
+(into () '(1 2 3))
+
+;; palendrome detector
+;; my soln
+#(every? true? (map (fn [x] (= (first x) (last x))) (map vector % (reverse %))))
+;; test
+(#(every? true? (map (fn [x] (= (first x) (last x))) (map vector % (reverse %)))) "racecar")
+;; chouser's soln (cast to seq for the string case)
+#(= (seq %) (reverse %))
+
+(take 3 (range))
