@@ -185,3 +185,23 @@ into ()
           (f b (+ a b) (dec n)))))
 1 1 3)
 
+;; get the caps
+#(apply str (re-seq #"[A-Z]+" %))
+
+(#(apply str (re-seq #"[A-Z]+" %)) "abcDEfgH")
+
+;; duplicate sequence
+;; my solution
+#(mapcat vector % %)
+
+(#(mapcat vector % %) [1 2 3])
+
+;; chouser
+#(interleave % %)
+
+;; cgrand
+#(for [x % y [x x]] y)
+
+;; range Restrictions: range
+#(take (Math/abs (- %1 %2)) (iterate inc %1))
+(= (#(take (Math/abs (- %1 %2)) (iterate inc %1)) 1 4) '(1 2 3))
