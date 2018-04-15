@@ -205,3 +205,30 @@ into ()
 ;; range Restrictions: range
 #(take (Math/abs (- %1 %2)) (iterate inc %1))
 (= (#(take (Math/abs (- %1 %2)) (iterate inc %1)) 1 4) '(1 2 3))
+
+;; compress a sequence
+;; my recursive solution
+(defn recur-sol
+  ([col] (recur-sol col []))
+  ([col acc]
+   (if (empty? col)
+     acc
+     (recur (rest col) (if-not (= (first col) (second col))
+                         (conj acc (first col))
+                         acc)))))
+
+(recur-sol [1 1 2 3 1 1 1 2])
+;; chouser
+#(map first (partition-by identity %))
+;; amalloy
+#(map last (partition-by max %))
+
+;; factorial fun
+;; my solution using reduce
+#(reduce * (range 1 (inc %)))
+
+(#(reduce * (range 1 (inc %))) 3)
+
+;; chouser/amalloy/cgrand
+#(apply * (range 1 (inc %)))
+
