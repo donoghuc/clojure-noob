@@ -358,3 +358,22 @@ partition-by #(do %)
 
 ;;amalloy (durrr)
 (not= true true false)
+
+;; slack
+(def header-raw [0 0 0 1 0 11 42 70 0 37 -78 80 0 0 47 47 0 0 0 0 90 -44 -36 -101])
+
+(let [x (doto (java.nio.ByteBuffer/wrap (byte-array 24 header-raw))
+          (.getInt)
+          (.getInt)
+          (.getInt)
+          (.getInt))]
+ (.getLong x))
+
+(let [x (java.nio.ByteBuffer/wrap (byte-array 24 header-raw))]
+  (dotimes [i 4] (.getInt x))
+  (.getLong x))
+
+;; Map Construction #61
+#(into {} (map vector %1 %2))
+
+(#(into {} (map vector %1 %2)) [1 2 3] [4 5 6])
