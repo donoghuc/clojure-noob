@@ -232,3 +232,129 @@ into ()
 ;; chouser/amalloy/cgrand
 #(apply * (range 1 (inc %)))
 
+;; implement flatten Restriction: flatten
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Try to solve with recursion. FAIL
+(defn recur-flat
+  ([col] (recur-flat col '()))
+  ([col acc]
+   (if (empty? col)
+     acc
+     (if-not (sequential? (first col))
+       (recur-flat (rest col) (cons (first col) acc))
+       (recur-flat (first col) acc)))))
+
+(recur-flat [1 2 [2 3] 4])
+
+(recur-flat [1 2 3 [1 2 3] 4 5 [1 2]])
+;; loose the rest of the seq when you go down a level
+(defn recur-flat
+  ([col] (recur-flat col 0 []))
+  ([col depth acc]
+   (if (and (empty? col) (zero? depth))
+     acc
+     (if-not (sequential? (first col))
+       (recur-flat (rest col) (rest full) (conj acc (first col)))
+       (recur-flat (first col) full acc)))))
+
+(recur-flat [1 2 [2 3] 4])
+
+(recur-flat [1 2 3 [1 2 3] 4 5 [1 2]])   
+
+;; find solution on clojuredocs.org/clojure.core/tree-seq 
+(tree-seq seq? identity [1 2 3 [1 2]])
+
+(def t '((1 2 (3)) (4)))
+
+(tree-seq sequential? seq t)
+
+(defn flatten [x]
+  (filter (complement sequential?)
+          (rest (tree-seq sequential? seq x))))
+
+(flatten t)
+;; solution
+﻿#(filter (complement sequential?) (tree-seq sequential? identity %))
+
+(#(filter (complement sequential?) (tree-seq sequential? identity %)) [1 2 3 [1 2 3] 4 5 [1 2]])
+
+;;chouser
+(fn f [x] (mapcat #(if (coll? %) (f %) [%]) x))
+
+
+;; cgrand/amalloy
+(fn f [x] (if (coll? x) (mapcat f x) [x]))
+
+((fn f [x] (if (sequential? x) (mapcat f x) [x])) [1 2 3 4])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;Replicate a sequence #33
+;; first crack, didnt need take because repeat can take number of repeats arg
+(fn [col rep] (mapcat #(take rep (repeat %)) col))
+
+((fn [col rep] (mapcat #(take rep (repeat %)) col)) [1 2 3] 3)
+;; chouser
+#(mapcat (partial repeat %2) %)
+;;cgrand
+#(for [x % y (repeat %2 x)] y)
+
+;; intro to iterate
+(take 5 (iterate #(+ 3 %) 1))
+;; (1 4 7 10 13)
+
+;; Interpose #40 Restriction: interpose
+#(drop-last (mapcat vector %2 (repeat %1)))
+
+(#(drop-last (mapcat vector %2 (repeat %1))) 0 [1 2 3])
+
+;;chouser
+#(rest (apply concat (for [i %2] [% i])))
+
+;; cgrand
+#(next (mapcat (fn [x] [% x]) %2))
+
+;;pack a sequence #31 
+#(partition-by identity %)
+
+(#(partition-by identity %) [1 1 2 1 1 1 3 3])
+
+;;cgrand
+partition-by #(do %)
+
+;; drop every nth item #41
+(fn [col n] (mapcat #(if (= n (count %)) (drop-last %) %) (partition-all n col)))
+
+((fn [col n] (mapcat #(if (= n (count %)) (drop-last %) %) (partition-all n col))) [1 2 3 4 5 6 7 8] 3)
+
+;;cgrand
+#(keep-indexed (fn [i x] (when (< 0 (mod (+ 1 i) %2)) x)) %)
+
+;; Split a sequence #49
+#(vector (into [] (take %1 %2)) (into [] (drop %1 %2)))
+(#(vector (into [] (take %1 %2)) (into [] (drop %1 %2))) 3 [1 2 3 4])
+
+;;chouser
+(juxt take drop)
+
+;; Advanced destructuring #51
+(= [1 2 [3 4 5] [1 2 3 4 5]] (let [[a b & c :as d] (range 1 6)] [a b c d]))
+
+;; half-truth #83 (true if some but not all, false if none)
+(fn [& bools]
+  (if (and (not (every? true? bools)) (some true? bools))
+    true
+    false))
+
+((fn [& bools]
+  (if (and (not (every? true? bools)) (some true? bools))
+    true
+    false)) true true false)
+
+;; chouser (genius)
+#(= 2 (count (set %&)))
+
+(#(= 2 (count (set %&))) true true false)
+
+;;amalloy (durrr)
+(not= true true false)
