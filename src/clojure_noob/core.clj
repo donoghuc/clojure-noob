@@ -362,6 +362,7 @@ partition-by #(do %)
 ;; slack
 (def header-raw [0 0 0 1 0 11 42 70 0 37 -78 80 0 0 47 47 0 0 0 0 90 -44 -36 -101])
 
+;;tlehman
 (let [x (doto (java.nio.ByteBuffer/wrap (byte-array 24 header-raw))
           (.getInt)
           (.getInt)
@@ -369,11 +370,184 @@ partition-by #(do %)
           (.getInt))]
  (.getLong x))
 
+;; cas
 (let [x (java.nio.ByteBuffer/wrap (byte-array 24 header-raw))]
   (dotimes [i 4] (.getInt x))
   (.getLong x))
+
+;; Justin Smith
+(let  [bb  (java.nio.ByteBuffer/wrap  (byte-array 24 header-raw))  
+      consume #(.getInt bb)                                                    
+      skip #(dotimes [i %] (consume))                                          
+      seq-number (consume)                                                            
+      _ (skip 1)                                                              
+      comp-size  (consume)                                                             
+      _ (skip 2)                                                              
+      full-size  (consume)]                                                            
+ [seq-number comp-size full-size]) 
+
+;; justin smith
+(let [bb (java.nio.ByteBuffer/wrap (byte-array 24 header-raw))                         
+     consume #(.getInt bb)             
+     ;; int-template describes how to keep or discard a sequence of ints      
+     int-template [[true 1] [false 1] [true 1] [false 2] [true 1]]]                    
+ ;; this is my typical mapcat usage - to simultaniously filter and concatenate         
+ (mapcat (fn [[use? n]]                                                        
+           (if use?                                                                    
+             ;; doall is needed here because otherwise laziness causes an      
+             ;; incorrect result                                              
+             (doall (repeatedly n consume)) ;; included in the result          
+             (dotimes [_ n] (consume)))) ;; returns nil - no output                    
+         int-template))
+
+;; Justin reduce
+(let [bb (java.nio.ByteBuffer/wrap (byte-array 24 header-raw))         
+      consumption-template [true false true false false true]]                         
+ (reduce (fn [acc hold?]                                               
+           (let [i (.getInt bb)]                                                       
+             (if hold?                                                        
+               (conj acc i)                                                    
+               acc)))                                                          
+         []                      
+         consumption-template))
+
+
 
 ;; Map Construction #61
 #(into {} (map vector %1 %2))
 
 (#(into {} (map vector %1 %2)) [1 2 3] [4 5 6])
+
+;; greatest common denominator #66
+(fn [a b]
+  (cond
+   (zero? a) b
+   (zero? b) a
+   :else (recur (rem (max a b) (min a b)) (min a b))))
+
+((fn [a b]
+  (cond
+   (zero? a) b
+   (zero? b) a
+   :else (recur (rem (max a b) (min a b)) (min a b)))) 192 270)
+
+;; chouser
+#(if (ratio? (/ % %2)) (/ % (numerator (/ % %2))) (min % %2))
+
+(#(if (ratio? (/ % %2)) (/ % (numerator (/ % %2))) (min % %2)) 192 270)
+
+;; Set Intersection #81
+(fn [col-1 col-2]
+  (into #{}
+        (remove nil?
+                (map #(if (contains? col-1 %) %) col-2))))
+
+((fn [col-1 col-2]
+  (into #{}
+        (remove nil?
+                (map #(if (contains? col-1 %) %) col-2)))) #{1 2 3} #{})
+
+;;chouser
+#(set (filter % %2))
+;;cgrand
+(comp set filter)
+;; noisesmith
+(fn [s & ss]
+  (letfn [(inter [a b]
+            (reduce (fn [c el]
+                      (if (contains? b el)
+                        (conj c el)
+                         c))
+                         #{}
+                         a))]
+    (reduce inter s ss)))
+
+;;Simple closures #107
+(fn [power] #(reduce * (repeat power %)))
+
+(((fn [power] #(reduce * (repeat power %))) 2) 16)
+
+;;cgrand
+#(fn [x] (Math/pow x %))
+
+;; noisesmith
+(fn [n]
+  (fn [x]
+    (apply * (repeat n x))))
+
+;;Re-implement Iterate #62
+(defn iter [f x]
+  (lazy-seq
+   (cons x (iter f (f x)))))
+
+(= (take 5 (iter #(* 2 %) 1)) [1 2 4 8 16])
+
+;;without defn
+(fn iter [f x]
+  (lazy-seq
+   (cons x (iter f (f x)))))
+
+;; amalloy
+(fn [f x]
+  (reductions (fn [a _] (f a))
+              x
+             (range)))
+
+;; Comparisons #166
+(fn [comp a b]
+  (cond
+   (comp a b) :lt
+   (comp b a) :gt
+   :else :eq))
+
+((fn [comp a b]
+  (cond
+   (comp a b) :lt
+   (comp b a) :gt
+   :else :eq)) < 5 5)
+
+;; Cartesiann Product #90
+#(into #{} (for [a %1 b %2] [a b]))
+
+(#(into #{} (for [a %1 b %2] [a b])) #{1 2 3} #{4 5})
+
+;;Product Digits #99
+;;my sumbission
+(fn [a b]
+   ((fn recur-soln
+      ([value] (recur-soln value '()))
+      ([value acc] (let [x (/ value 10)
+                         f #(* 10 (- (/ % 10) (int (/ % 10))))]
+                     (if-not (>= x 1)
+                       (cons (f value) acc)
+                       (recur (int x) (cons (f value) acc)))))) (* a b)))
+;; test
+((fn [a b]
+   ((fn recur-soln
+      ([value] (recur-soln value '()))
+      ([value acc] (let [x (/ value 10)
+                         f #(* 10 (- (/ % 10) (int (/ % 10))))]
+                     (if-not (>= x 1)
+                       (cons (f value) acc)
+                       (recur (int x) (cons (f value) acc)))))) (* a b))) 8 9)
+
+;;chouser
+#(for [c (str (* % %2))] (- (int c) 48))
+
+;;cgrand
+#(map (zipmap "0123456789" (range 10)) (str (apply * %&)))
+
+;;amalloy
+#(map (comp read-string str)
+      (str (* % %2)))
+
+;;noisesmith
+(fn digits [a b]
+  (->> (* a b)
+       (repeat 2)
+       (iterate (fn chop [[_ pool]]
+                  [(rem pool 10) (quot pool 10)]))
+       (take-while #(not (every? zero? %)))
+       (rest)
+       (map first)
+       (reverse)))
