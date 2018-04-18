@@ -551,3 +551,58 @@ partition-by #(do %)
        (rest)
        (map first)
        (reverse)))
+
+;; Group a sequence #63 
+;; recursive solution
+(defn tst [expr col]
+  ((fn [proc acc]
+     (if (empty? proc)
+       acc
+       (let [i (first proc)]
+         (if (contains? acc (first i))
+           (recur (rest proc) (update acc (first i) conj (last i)))
+           (recur (rest proc) (assoc acc (first i) (vector (last i))))))))
+   (map vector (map expr col) col) {}))
+
+(tst #(> % 5) [1 3 6 8])
+
+;; solution 1
+(fn [expr col]
+  (apply merge-with concat (map (fn [a b] {a [b]}) (map expr col) col)))
+;; solution 1 test
+((fn [expr col]
+  (apply merge-with concat (map (fn [a b] {a [b]}) (map expr col) ))) #(> % 5) [1 3 6 8])
+
+;; chouser
+#(reduce
+  (fn [m x]
+    (assoc m (% x) (conj (m (% x) []) x)))
+  {} %2)
+
+;;cgrand
+#(reduce
+  (fn [m x]
+    (assoc m (% x) (conj (m (% x) []) x)))
+  {} %2)
+
+;;cgrand
+#(apply merge-with into (map (fn [x] {(% x) [x]}) %2))
+
+;; amalloy
+#(apply merge-with into
+        (for [x %2]
+          {(% x) [x]}))
+
+;;noisesmith
+;;#(reduce (fn [m el]
+;;           (let [lookup (%1 el)
+;;                 existing (get m lookup [])
+;;                 updated (conj existing el)]
+;;             (assoc m lookup updated)))
+;;         {}
+;;         %2)
+
+#(reduce (fn [m el]
+           (update-in m [(%1 el)] (fnil conj []) el))
+         {}
+         %2)
