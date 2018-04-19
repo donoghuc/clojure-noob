@@ -606,3 +606,68 @@ partition-by #(do %)
            (update-in m [(%1 el)] (fnil conj []) el))
          {}
          %2)
+
+;;symetric difference # 88
+;;casadilla
+#(into #{} (remove (clojure.set/intersection %1 %2) (clojure.set/union %1 %2)))
+
+(= ( #(into #{} (remove (clojure.set/intersection %1 %2) (clojure.set/union %1 %2))) #{1 2 3 4 5 6} #{1 3 5 7}) #{2 4 6 7})
+
+;;gcrand amalloy
+#(set (concat (remove % %2) (remove %2 %)))
+
+;; juxt example
+(def ex-map {:h [1 2]
+             :e [3 4]
+             :l [5 6]
+             :p [7 8]
+             })
+
+(into [] ((juxt :h :e :l :p) ex-map))
+
+
+;; dot product #143
+
+;; submission
+#(reduce + (map * %1 %2))
+
+;; could use apply
+#(apply + (map * %1 %2))
+;; test
+(= 0 (#(reduce + (map * %1 %2)) [0 1 0] [1 0 0]))
+
+;;binary to decimal # 122
+;;casadilla
+(fn [binary]
+  (reduce + (map #(if (= %1 \1) %2 0) (reverse binary) (iterate #(* 2 %) 1))))
+;;test
+(= 65535 ((fn [bin] (reduce +
+                  (map #(if (= %1 \1) %2 0) bin)
+                  (iterate #(* 2 %) 1))) "1111111111111111"))
+
+;;chouser
+#(read-string (str "2r" %))
+
+;;cgrand
+reduce #(+ % % ({\0 0} %2 1)) 0
+
+;;noisesmith
+#(first
+  (reduce
+   (fn [[total mult] item]
+     [(bit-or total (bit-shift-left (get {\0 0 \1 1} item) mult))
+      (inc mult)])
+   [0 0]
+   (reverse %)))
+
+;; infix calculator
+
+((fn [& stack] ((fn recur-calc
+    [col acc]
+    (if (= 2 (count col))
+      ((first col) acc (last col))
+      (if (number? (first col))
+        (recur (rest col) ((nth col 1) acc (first col)))
+        (recur (rest col) acc)))) stack 0)) 1 - 3)
+
+((fn [& stack] (next stack)) 2 + 5)
