@@ -661,13 +661,100 @@ reduce #(+ % % ({\0 0} %2 1)) 0
    (reverse %)))
 
 ;; infix calculator
+;;casadilla
+(fn [& stack]
+  ((fn recur-calc
+     [col acc]
+     (if (= 2 (count col))
+       ((first col) acc (last col))
+       (recur (drop 1 (rest col)) ((first col) acc (nth col 1)))))
+   (rest stack) (first stack)))
 
-((fn [& stack] ((fn recur-calc
-    [col acc]
-    (if (= 2 (count col))
-      ((first col) acc (last col))
-      (if (number? (first col))
-        (recur (rest col) ((nth col 1) acc (first col)))
-        (recur (rest col) acc)))) stack 0)) 1 - 3)
+;; test
+((fn [& stack]
+  ((fn recur-calc
+     [col acc]
+     (if (= 2 (count col))
+       ((first col) acc (last col))
+       (recur (drop 1 (rest col)) ((first col) acc (nth col 1))))) (rest stack) (first stack))) 20 / 2 + 2 + 4 + 8 - 6 - 10 * 9)
 
-((fn [& stack] (next stack)) 2 + 5)
+;;chouser
+(fn f
+  ([a] a)
+  ([a b c & m]
+   (apply f (b a c) m)))
+
+;;cgrand
+(fn [x & xs]
+  (reduce (fn [x [f y]] (f x y)) x
+    (partition 2 xs)))
+
+;;amalloy
+(fn c [x f y & r]
+  ((if r
+     #(apply c % r) +)
+   (f x y)))
+
+;;noisesmith
+(fn infixr
+  [& steps]
+  (loop [[a op b & remaining] steps]
+    (let [step (op a b)]
+      (if (empty? remaining)
+        step
+        (recur (cons step remaining))))))
+
+
+;; Indexing Sequences #157
+;;casadilla
+#(map vector % (range))
+;;test
+(#(map vector % (range)) [:a :b :c])
+
+;;cgrand
+map-indexed #(list %2 %)
+
+;;noisesmith
+map-indexed
+ (comp reverse list)
+
+;;Pascal triangle #97
+;;use algo C(line, i)   = line! / ( (line-i)! * i! ) 
+;;https://www.geeksforgeeks.org/pascal-triangle/
+
+;; solution used
+(fn [line]
+  (for [x (range line)]
+    (/ (#(if (<= % 1) 1 (reduce * (range 1 (inc %)))) (- line 1)) (* (#(if (<= % 1) 1 (reduce * (range 1 (inc %)))) (- (- line 1) x)) (#(if (<= % 1) 1 (reduce * (range 1 (inc %)))) x)))))
+
+;; using let
+(fn [line]
+  (let [fa #(if (<= % 1) 1 (reduce * (range 1 (inc %))))
+        index0->1 (- line 1)]
+    (for [x (range line)]
+      (/ (fa index0->1) (* (fa (- index0->1 x)) (fa x))))))
+;; test
+((fn [line]
+  (let [fa #(if (<= % 1) 1 (reduce * (range 1 (inc %))))
+        index0->1 (- line 1)]
+    (for [x (range line)]
+      (/ (fa index0->1) (* (fa (- index0->1 x)) (fa x)))))) 5)
+
+;; chouser
+(fn p [x]
+  (if (= x 1)
+    [1]
+    `[1 ~@(map + (p (- x 1)) (next (p (- x 1)))) 1]))
+;; cgrand
+(fn [n]
+  (nth (iterate #(concat [1] (map + % (next %)) [1]) [1]) (dec n)))
+;; amalloy
+(fn [n]
+  (-> (iterate (fn [row]
+                 (map + `(0 ~@row) `(~@row 0)))
+               [1])
+      (nth (dec n))))
+;; noisesmith
+#(letfn [(row [prev]
+           (concat [1] (map (partial apply +) (partition 2 1 prev)) [1]))]
+   (nth (iterate row [1]) (dec %)))
