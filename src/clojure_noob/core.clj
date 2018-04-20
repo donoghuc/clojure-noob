@@ -758,3 +758,50 @@ map-indexed
 #(letfn [(row [prev]
            (concat [1] (map (partial apply +) (partition 2 1 prev)) [1]))]
    (nth (iterate row [1]) (dec %)))
+
+
+;;Re-Implement Map # 118
+
+;; recursive! third unit test blows stack :(
+(fn recur-map
+  ([f col] (recur-map f col []))
+  ([f col acc]
+   (if (empty? col)
+     acc
+     (recur f (rest col) (conj acc (f (first col)))))))
+
+((fn recur-map
+  ([f col] (recur-map f col []))
+  ([f col acc]
+   (if (empty? col)
+     acc
+     (recur f (rest col) (conj acc (f (first col))))))) inc [2 3 4 5])
+;;reductions
+(fn [f col]
+  (drop 1
+        (reductions (fn ([a b] (f b))) nil col)))
+;; reductions test (blows stack with recur)
+(= [1000000 1000001]
+   (->> ((fn [f col]
+  (drop 1 (reductions (fn ([a b] (f b))) nil col))) inc (range))
+        (drop (dec 1000000))
+        (take 2)))
+
+;;chouser
+(fn l [f [a & m]]
+  (lazy-seq
+    (cons (f a) (if m (l f m)))))
+
+;;grand/amalloy
+(fn m [f s]
+  (lazy-seq
+    (when-let [[h & t] (seq s)]
+      (cons (f h) (m f t)))))
+
+;;noisesmith
+(fn MAP [f s]
+  (if (empty? s)
+    nil
+    (lazy-seq
+     (cons (f (first s))
+           (MAP f (rest s))))))
