@@ -805,3 +805,39 @@ map-indexed
     (lazy-seq
      (cons (f (first s))
            (MAP f (rest s))))))
+
+
+
+;; to tree or not to tree # 95
+(fn [test-tree]
+  (every? true?
+   (map #(if-not (sequential? %)
+           (if (false? %) false true)
+           (if (= (count %) 3)
+             true
+             false)) (tree-seq sequential? identity test-tree))))
+
+;; sum of square digits
+
+(def sq-sum
+  (fn [col] (reduce + (map #(* % %) col))))
+
+(sq-sum [1 2 3])
+
+(def int->str
+  (fn [x] (#(map (comp read-string str) (str %)) x)))
+
+(int->str 58)
+
+;; still working on soln
+(fn [col]
+  (reduce + (map (fn [val]
+                   (if (< val (sq-sum (int->str val)))
+                     1
+                     0)) col)))
+
+((fn [col]
+  (reduce + (map (fn [val]
+                   (if (< val (sq-sum (int->str val)))
+                     1
+                     0)) col))) (range 10))
