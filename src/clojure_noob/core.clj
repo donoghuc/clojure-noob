@@ -817,27 +817,68 @@ map-indexed
              true
              false)) (tree-seq sequential? identity test-tree))))
 
-;; sum of square digits
+;; sum of square digits #120
 
+;; square
 (def sq-sum
   (fn [col] (reduce + (map #(* % %) col))))
 
 (sq-sum [1 2 3])
-
+;; int->string (amalloy)
 (def int->str
   (fn [x] (#(map (comp read-string str) (str %)) x)))
 
 (int->str 58)
 
-;; still working on soln
+;; solution submitted using threading last macro
 (fn [col]
-  (reduce + (map (fn [val]
-                   (if (< val (sq-sum (int->str val)))
-                     1
-                     0)) col)))
+  (letfn [(sq-sum [c] (reduce + (map #(* % %) c)))
+          (int->str [i] (#(map (comp read-string str) (str %)) i))]
+    (->> col
+         (map (fn [val] (if (< val (sq-sum (int->str val))) 1 0)) )
+         (reduce +))))
 
-((fn [col]
-  (reduce + (map (fn [val]
-                   (if (< val (sq-sum (int->str val)))
-                     1
-                     0)) col))) (range 10))
+;;chouser
+reduce
+#(+ %
+    (if (< %2 (apply + (for [c (str %2)]
+                         (Math/pow (- (int c) 48) 2))))
+      1
+      0))
+0
+
+;;cgrand
+reduce
+#(if (< %2 (reduce + 
+  (map (zipmap "0123456789" (map * (range) (range)))
+    (str %2)))) (inc %) %) 0
+
+;; amalloy
+(fn [coll]
+  (count
+   (for [x coll
+         :let [digits (map (comp read-string str) (str x))]
+         :when (< x (reduce + (map #(* % %) digits)))]
+     x)))
+
+;;noisesmith
+#(letfn [(get-digits [n]
+           (loop [digits () pool n]
+             (if (zero? pool)
+               digits
+               (recur (cons (rem pool 10) digits) (quot pool 10)))))
+         (square [x] (* x x)) 
+         (<ssd? [n]
+           (< n (apply + (map square (get-digits n)))))]
+   (count (filter <ssd? %)))
+
+
+;; card recognition
+(fn [card]
+  (let [suits {\S :spade
+             \D :diamond
+             \H :heart
+             \C :club}
+      vals (into {} (map vector "23456789TJQKA" (range)))]
+    {:suit (get suits (first card)) :rank (get vals (last card))}))
+
